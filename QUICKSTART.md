@@ -7,7 +7,7 @@
 cd /Users/prodbygus/IdeaProjects/java-text-comparion
 docker-compose up -d
 ```
-✓ PostgreSQL running on localhost:5432
+✓ PostgreSQL running on localhost:5433
 
 ### Step 2: Build the Application (90 seconds)
 ```bash
@@ -105,7 +105,7 @@ docker-compose logs postgres
 ```bash
 # Change database port in compose.yaml
 # Then update application.properties:
-spring.datasource.url=jdbc:postgresql://localhost:NEW_PORT/textcomparison
+spring.datasource.url=jdbc:postgresql://localhost:NEW_PORT/postgres
 ```
 
 ### Out of Memory
@@ -264,7 +264,7 @@ logging.level.org.hibernate.SQL=DEBUG
 
 ### Check database connection
 ```bash
-psql -h localhost -U textuser -d textcomparison
+psql -h localhost -p 5433 -U postgres -d postgres
 ```
 
 ### View application logs
