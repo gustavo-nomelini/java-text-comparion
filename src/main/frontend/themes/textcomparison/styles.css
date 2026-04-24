@@ -1,0 +1,186 @@
+:host,
+html {
+  color-scheme: dark;
+}
+
+:root {
+  --lumo-base-color: #0f1115;
+  --lumo-body-text-color: #e5e7eb;
+  --lumo-secondary-text-color: #9ca3af;
+  --lumo-tint-5pct: rgba(255, 255, 255, 0.06);
+  --lumo-tint-10pct: rgba(255, 255, 255, 0.1);
+  --lumo-contrast-10pct: rgba(255, 255, 255, 0.1);
+  --lumo-contrast-20pct: rgba(255, 255, 255, 0.2);
+
+  --lumo-primary-color: #ff7a18;
+  --lumo-primary-color-50pct: rgba(255, 122, 24, 0.5);
+  --lumo-primary-color-10pct: rgba(255, 122, 24, 0.1);
+  --lumo-primary-text-color: #ffb066;
+
+  --app-bg: #0b0d10;
+  --app-surface: #151922;
+  --app-surface-2: #1a1f2b;
+  --app-border: #2a3242;
+  --app-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+body {
+  background: radial-gradient(circle at top right, #1c1110 0%, var(--app-bg) 45%);
+  color: var(--lumo-body-text-color);
+}
+
+vaadin-app-layout::part(navbar) {
+  background: linear-gradient(90deg, #131720, #1a1f2b);
+  border-bottom: 1px solid var(--app-border);
+}
+
+vaadin-app-layout::part(drawer) {
+  background-color: #11151d;
+  border-right: 1px solid var(--app-border);
+}
+
+.app-title {
+  margin: 0.6rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.2px;
+  color: #ffe8d1;
+}
+
+.app-side-nav {
+  padding: 0.4rem;
+}
+
+vaadin-side-nav-item::part(content) {
+  border-radius: 10px;
+  color: var(--lumo-body-text-color);
+}
+
+vaadin-side-nav-item:hover::part(content),
+vaadin-side-nav-item[active]::part(content) {
+  background-color: var(--lumo-primary-color-10pct);
+  color: #ffd0a2;
+}
+
+.upload-view,
+.history-view {
+  background: transparent;
+}
+
+.page-title {
+  margin: 0 0 0.4rem;
+  color: #fff4e8;
+  font-weight: 700;
+}
+
+.section-card {
+  background: linear-gradient(160deg, var(--app-surface), var(--app-surface-2));
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  padding: 1.2rem;
+  box-shadow: var(--app-shadow);
+}
+
+.comparison-card {
+  margin-top: 1rem;
+}
+
+.section-title {
+  margin: 0 0 0.3rem;
+  color: #ffe2c2;
+  font-size: 1.1rem;
+}
+
+.section-description {
+  margin-top: 0;
+  color: var(--lumo-secondary-text-color);
+}
+
+.upload-dropzone {
+  margin-top: 0.6rem;
+}
+
+vaadin-upload {
+  --vaadin-upload-drop-label-color: var(--lumo-body-text-color);
+}
+
+vaadin-upload::part(drop-label) {
+  color: var(--lumo-body-text-color);
+}
+
+vaadin-upload::part(primary-buttons) vaadin-button,
+.primary-action {
+  background: linear-gradient(135deg, #ff7a18, #ff9440);
+  color: #1f1308;
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(255, 122, 24, 0.35);
+}
+
+.primary-action:hover,
+vaadin-upload::part(primary-buttons) vaadin-button:hover {
+  filter: brightness(1.08);
+}
+
+.secondary-action {
+  background-color: transparent;
+  color: #ffba84;
+  border: 1px solid rgba(255, 148, 64, 0.5);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.metric-value {
+  margin: 0;
+  font-size: 1.85rem;
+  color: #ffd3ac;
+}
+
+.metric-label {
+  margin: 0.45rem 0 0;
+  color: var(--lumo-secondary-text-color);
+}
+
+.result-summary {
+  color: #f5f7fb;
+}
+
+vaadin-dialog-overlay::part(content) {
+  background: linear-gradient(165deg, #161b25, #11161f);
+  color: var(--lumo-body-text-color);
+  border: 1px solid var(--app-border);
+}
+
+.history-grid {
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+vaadin-grid {
+  --vaadin-grid-cell-background: #121722;
+  --vaadin-grid-cell-color: #e5e7eb;
+  --vaadin-grid-header-cell-background: #1a2130;
+  --vaadin-grid-header-cell-color: #ffd9b8;
+  --vaadin-grid-border-color: var(--app-border);
+}
+
+vaadin-grid::part(row):hover vaadin-grid-cell-content {
+  background-color: rgba(255, 122, 24, 0.08);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lumo-primary-color);
+  outline-offset: 2px;
+}
+

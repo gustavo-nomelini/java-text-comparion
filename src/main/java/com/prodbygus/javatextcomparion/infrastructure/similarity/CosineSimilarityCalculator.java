@@ -1,7 +1,7 @@
 package com.prodbygus.javatextcomparion.infrastructure.similarity;
 
 import com.prodbygus.javatextcomparion.domain.service.SimilarityMetric;
-import com.prodbygus.javatextcomparion.infrastructure.normalization.EnglishTextNormalizer;
+import com.prodbygus.javatextcomparion.domain.service.TextNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -12,9 +12,9 @@ import java.util.*;
 @Component
 public class CosineSimilarityCalculator implements SimilarityMetric {
 
-    private final EnglishTextNormalizer normalizer;
+    private final TextNormalizer normalizer;
 
-    public CosineSimilarityCalculator(EnglishTextNormalizer normalizer) {
+    public CosineSimilarityCalculator(TextNormalizer normalizer) {
         this.normalizer = normalizer;
     }
 
@@ -36,12 +36,7 @@ public class CosineSimilarityCalculator implements SimilarityMetric {
             return 0.0;
         }
 
-        // Create term frequency vectors
-        Map<String, Double> vector1 = calculateTfIdf(tokens1, tokens2);
-        Map<String, Double> vector2 = calculateTfIdf(tokens2, tokens1);
-
-        // Calculate cosine similarity
-        return cosineSimilarity(vector1, vector2);
+        return cosineSimilarityTfIdf(tokens1, tokens2);
     }
 
     @Override
@@ -50,74 +45,65 @@ public class CosineSimilarityCalculator implements SimilarityMetric {
     }
 
     /**
-     * Calculate TF-IDF weights for tokens.
-     *
-     * @param tokens the tokens to weight
-     * @param allTokens all tokens (for IDF calculation)
-     * @return map of token to TF-IDF weight
+     * Cosine similarity using TF-IDF weighting with a 2-document corpus (docA/docB).
+     * <p>
+     * IDF uses smoothing to avoid division by zero:
+     * <pre>
+     * idf(t) = log((N + 1) / (df(t) + 1)) + 1
+     * </pre>
+     * where N = 2 and df(t) is the number of documents containing term t.
      */
-    private Map<String, Double> calculateTfIdf(String[] tokens, String[] allTokens) {
-        Map<String, Double> tfidf = new HashMap<>();
-        Set<String> uniqueTokens = new HashSet<>(Arrays.asList(allTokens));
+    private double cosineSimilarityTfIdf(String[] tokens1, String[] tokens2) {
+        Map<String, Integer> tf1 = termFrequencies(tokens1);
+        Map<String, Integer> tf2 = termFrequencies(tokens2);
 
-        for (String token : tokens) {
-            double tf = (double) countOccurrences(tokens, token) / tokens.length;
-            double idf = Math.log((double) uniqueTokens.size() / (countOccurrences(allTokens, token) + 1));
-            tfidf.put(token, tf * idf);
-        }
+        int len1 = tokens1.length;
+        int len2 = tokens2.length;
 
-        return tfidf;
-    }
+        Set<String> vocabulary = new HashSet<>(tf1.keySet());
+        vocabulary.addAll(tf2.keySet());
 
-    /**
-     * Count occurrences of a token in array.
-     *
-     * @param tokens the token array
-     * @param token the token to count
-     * @return count
-     */
-    private int countOccurrences(String[] tokens, String token) {
-        int count = 0;
-        for (String t : tokens) {
-            if (t.equals(token)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Calculate cosine similarity between two vectors.
-     *
-     * @param vector1 first vector
-     * @param vector2 second vector
-     * @return cosine similarity
-     */
-    private double cosineSimilarity(Map<String, Double> vector1, Map<String, Double> vector2) {
-        double dotProduct = 0.0;
-        double magnitude1 = 0.0;
-        double magnitude2 = 0.0;
-
-        // Calculate dot product and magnitudes
-        Set<String> allKeys = new HashSet<>(vector1.keySet());
-        allKeys.addAll(vector2.keySet());
-
-        for (String key : allKeys) {
-            double val1 = vector1.getOrDefault(key, 0.0);
-            double val2 = vector2.getOrDefault(key, 0.0);
-            dotProduct += val1 * val2;
-            magnitude1 += val1 * val1;
-            magnitude2 += val2 * val2;
-        }
-
-        magnitude1 = Math.sqrt(magnitude1);
-        magnitude2 = Math.sqrt(magnitude2);
-
-        if (magnitude1 == 0 || magnitude2 == 0) {
+        if (vocabulary.isEmpty()) {
             return 0.0;
         }
 
-        return dotProduct / (magnitude1 * magnitude2);
+        final double n = 2.0;
+        double dot = 0.0;
+        double mag1 = 0.0;
+        double mag2 = 0.0;
+
+        for (String term : vocabulary) {
+            int c1 = tf1.getOrDefault(term, 0);
+            int c2 = tf2.getOrDefault(term, 0);
+            int df = (c1 > 0 ? 1 : 0) + (c2 > 0 ? 1 : 0);
+
+            // Smoothing keeps IDF positive and stable for small corpora.
+            double idf = Math.log((n + 1.0) / (df + 1.0)) + 1.0;
+
+            double w1 = (c1 == 0) ? 0.0 : ((double) c1 / len1) * idf;
+            double w2 = (c2 == 0) ? 0.0 : ((double) c2 / len2) * idf;
+
+            dot += w1 * w2;
+            mag1 += w1 * w1;
+            mag2 += w2 * w2;
+        }
+
+        if (mag1 == 0.0 || mag2 == 0.0) {
+            return 0.0;
+        }
+
+        return dot / (Math.sqrt(mag1) * Math.sqrt(mag2));
+    }
+
+    private Map<String, Integer> termFrequencies(String[] tokens) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (String token : tokens) {
+            if (token == null || token.isBlank()) {
+                continue;
+            }
+            counts.merge(token, 1, Integer::sum);
+        }
+        return counts;
     }
 }
 

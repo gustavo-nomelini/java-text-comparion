@@ -8,7 +8,6 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,12 +30,15 @@ public class ComparisonHistoryView extends Composite<VerticalLayout> {
         VerticalLayout layout = getContent();
         layout.setPadding(true);
         layout.setSpacing(true);
+        layout.addClassName("history-view");
 
         H2 title = new H2("Comparison History");
+        title.addClassName("page-title");
         layout.add(title);
 
         // Create grid
         Grid<ComparisonResult> grid = new Grid<>(ComparisonResult.class, false);
+        grid.addClassName("history-grid");
         grid.addColumn(ComparisonResult::documentAName).setHeader("Document A");
         grid.addColumn(ComparisonResult::documentBName).setHeader("Document B");
         grid.addColumn(result -> String.format("%.2f%%", result.correlationIndex() * 100))

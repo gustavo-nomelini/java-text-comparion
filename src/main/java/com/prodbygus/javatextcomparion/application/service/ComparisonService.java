@@ -4,19 +4,18 @@ import com.prodbygus.javatextcomparion.application.dto.*;
 import com.prodbygus.javatextcomparion.domain.model.Comparison;
 import com.prodbygus.javatextcomparion.domain.model.Document;
 import com.prodbygus.javatextcomparion.domain.model.FileType;
-import com.prodbygus.javatextcomparion.domain.model.SegmentCategory;
 import com.prodbygus.javatextcomparion.domain.repository.ComparisonRepository;
 import com.prodbygus.javatextcomparion.domain.repository.DocumentRepository;
 import com.prodbygus.javatextcomparion.domain.service.CorrelationIndexCalculator;
 import com.prodbygus.javatextcomparion.domain.service.SimilarityMetric;
 import com.prodbygus.javatextcomparion.domain.service.TextNormalizer;
 import com.prodbygus.javatextcomparion.infrastructure.parser.TextExtractorFactory;
+import com.prodbygus.javatextcomparion.infrastructure.parser.TextExtractor;
 import com.prodbygus.javatextcomparion.shared.exception.FileParsingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,15 +70,28 @@ public class ComparisonService {
     public DocumentDto uploadDocument(DocumentUploadRequest request) throws FileParsingException {
         request.validate();
 
-        // Parse content
+        // Extract text and normalize
         FileType fileType = FileType.fromFileName(request.filename());
-        String normalizedContent = textNormalizer.normalize(request.content());
+
+        TextExtractor extractor = textExtractorFactory.getExtractor(request.filename());
+        String extractedText = extractor.extractText(request.fileContent());
+        if (extractedText == null || extractedText.isBlank()) {
+            throw new FileParsingException("No text could be extracted from file: " + request.filename());
+        }
+
+        String normalizedContent = textNormalizer.normalize(extractedText);
+        if (normalizedContent == null || normalizedContent.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Normalized text is empty after preprocessing. File may contain only images or unsupported characters: "
+                            + request.filename()
+            );
+        }
 
         // Create and save document
         Document document = Document.builder()
                 .originalFileName(request.filename())
                 .fileType(fileType)
-                .content(request.content())
+                .content(extractedText)
                 .normalizedContent(normalizedContent)
                 .uploadedAt(LocalDateTime.now())
                 .build();

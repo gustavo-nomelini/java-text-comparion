@@ -1,13 +1,11 @@
 package com.prodbygus.javatextcomparion.application.dto;
 
-import java.time.LocalDateTime;
-
 /**
  * DTO for uploading a document.
  */
 public record DocumentUploadRequest(
         String filename,
-        String content
+        byte[] fileContent
 ) {
     /**
      * Validate the request.
@@ -18,7 +16,7 @@ public record DocumentUploadRequest(
         if (filename == null || filename.trim().isEmpty()) {
             throw new IllegalArgumentException("Filename must be specified");
         }
-        if (content == null || content.trim().isEmpty()) {
+        if (fileContent == null || fileContent.length == 0) {
             throw new IllegalArgumentException("File content must not be empty");
         }
     }

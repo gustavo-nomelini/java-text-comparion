@@ -5,7 +5,6 @@ import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.router.RouterLink;
 
 /**
  * Main application layout with navigation.
@@ -19,7 +18,7 @@ public class MainLayout extends AppLayout {
 
     private void createHeader() {
         H1 title = new H1("Text Comparison System");
-        title.getStyle().set("font-size", "large").set("margin", "0.5rem");
+        title.addClassName("app-title");
 
         var toggle = new DrawerToggle();
 
@@ -28,12 +27,13 @@ public class MainLayout extends AppLayout {
 
     private void createDrawer() {
         var nav = new SideNav();
+        nav.addClassName("app-side-nav");
 
         var uploadItem = new SideNavItem("Upload & Compare", ComparisonUploadView.class);
         var historyItem = new SideNavItem("History", ComparisonHistoryView.class);
 
-        uploadItem.addItem(historyItem);
         nav.addItem(uploadItem);
+        nav.addItem(historyItem);
 
         addToDrawer(nav);
     }

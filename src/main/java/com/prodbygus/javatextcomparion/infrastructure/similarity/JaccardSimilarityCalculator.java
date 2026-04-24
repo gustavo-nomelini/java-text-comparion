@@ -1,7 +1,7 @@
 package com.prodbygus.javatextcomparion.infrastructure.similarity;
 
 import com.prodbygus.javatextcomparion.domain.service.SimilarityMetric;
-import com.prodbygus.javatextcomparion.infrastructure.normalization.EnglishTextNormalizer;
+import com.prodbygus.javatextcomparion.domain.service.TextNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -13,9 +13,9 @@ import java.util.Set;
 @Component
 public class JaccardSimilarityCalculator implements SimilarityMetric {
 
-    private final EnglishTextNormalizer normalizer;
+    private final TextNormalizer normalizer;
 
-    public JaccardSimilarityCalculator(EnglishTextNormalizer normalizer) {
+    public JaccardSimilarityCalculator(TextNormalizer normalizer) {
         this.normalizer = normalizer;
     }
 

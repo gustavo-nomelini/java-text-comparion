@@ -15,12 +15,11 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +42,10 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
         VerticalLayout layout = getContent();
         layout.setPadding(true);
         layout.setSpacing(true);
+        layout.addClassName("upload-view");
 
         H2 title = new H2("Upload & Compare Documents");
+        title.addClassName("page-title");
         layout.add(title);
 
         // Upload section
@@ -58,26 +59,28 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
 
     private Div createUploadSection() {
         Div section = new Div();
-        section.getStyle().set("border", "1px solid #ccc");
-        section.getStyle().set("border-radius", "4px");
-        section.getStyle().set("padding", "1rem");
+        section.addClassName("section-card");
 
         H2 heading = new H2("Step 1: Upload Documents");
+        heading.addClassName("section-title");
         Paragraph info = new Paragraph("Upload TXT, PDF, or DOCX files");
+        info.addClassName("section-description");
 
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
+        MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
+        Upload upload = new Upload();
+        upload.setReceiver(buffer);
+        upload.addClassName("upload-dropzone");
         upload.setAcceptedFileTypes(".txt", ".pdf", ".docx");
         upload.setMaxFiles(2);
         upload.setMaxFileSize(10 * 1024 * 1024); // 10MB
 
         upload.addSucceededListener(event -> {
             try {
-                byte[] data = buffer.getInputStream().readAllBytes();
-                String content = new String(data, StandardCharsets.UTF_8);
                 String filename = event.getFileName();
 
-                DocumentUploadRequest request = new DocumentUploadRequest(filename, content);
+                byte[] data = buffer.getInputStream(filename).readAllBytes();
+
+                DocumentUploadRequest request = new DocumentUploadRequest(filename, data);
                 DocumentDto uploadedDoc = comparisonService.uploadDocument(request);
                 uploadedDocuments.add(uploadedDoc);
 
@@ -98,15 +101,16 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
 
     private Div createComparisonSection() {
         Div section = new Div();
-        section.getStyle().set("border", "1px solid #ccc");
-        section.getStyle().set("border-radius", "4px");
-        section.getStyle().set("padding", "1rem");
-        section.getStyle().set("margin-top", "1rem");
+        section.addClassName("section-card");
+        section.addClassName("comparison-card");
 
         H2 heading = new H2("Step 2: Compare");
+        heading.addClassName("section-title");
         Paragraph info = new Paragraph("Select two uploaded documents to compare");
+        info.addClassName("section-description");
 
         Button compareButton = new Button("Compare Documents", VaadinIcon.PLAY.create());
+        compareButton.addClassName("primary-action");
         compareButton.addClickListener(event -> {
             if (uploadedDocuments.size() < 2) {
                 Notification.show("Please upload at least 2 documents", 3000, Notification.Position.TOP_CENTER);
@@ -149,9 +153,9 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
         content.setSpacing(true);
 
         Paragraph summary = new Paragraph(result.summary());
+        summary.addClassName("result-summary");
         Div metrics = new Div();
-        metrics.getStyle().set("display", "flex");
-        metrics.getStyle().set("gap", "1rem");
+        metrics.addClassName("metrics-grid");
         metrics.add(
                 createMetricCard("Correlation Index", String.format("%.2f%%", result.correlationIndex() * 100)),
                 createMetricCard("Cosine Similarity", String.format("%.2f%%", result.cosineSimilarity() * 100)),
@@ -162,6 +166,7 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
         dialog.add(content);
 
         Button closeButton = new Button("Close", event -> dialog.close());
+        closeButton.addClassName("secondary-action");
         dialog.getFooter().add(closeButton);
 
         dialog.open();
@@ -169,18 +174,13 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
 
     private Div createMetricCard(String label, String value) {
         Div card = new Div();
-        card.getStyle().set("border", "1px solid #ccc");
-        card.getStyle().set("border-radius", "4px");
-        card.getStyle().set("padding", "1rem");
-        card.getStyle().set("flex", "1");
+        card.addClassName("metric-card");
 
         H2 metricValue = new H2(value);
-        metricValue.getStyle().set("margin", "0");
-        metricValue.getStyle().set("font-size", "2em");
+        metricValue.addClassName("metric-value");
 
         Paragraph metricLabel = new Paragraph(label);
-        metricLabel.getStyle().set("margin", "0.5rem 0 0 0");
-        metricLabel.getStyle().set("color", "#888");
+        metricLabel.addClassName("metric-label");
 
         card.add(metricValue, metricLabel);
         return card;
