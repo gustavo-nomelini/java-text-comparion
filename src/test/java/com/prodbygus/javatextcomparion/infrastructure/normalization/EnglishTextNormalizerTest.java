@@ -64,8 +64,29 @@ class EnglishTextNormalizerTest {
     @Test
     void shouldRemoveAccents() {
         String result = normalizer.normalize("café résumé");
-        assertTrue(result.contains("caf"));
-        assertTrue(result.contains("resum"));
+        assertTrue(result.contains("cafe"));
+        assertTrue(result.contains("resume"));
+    }
+
+    @Test
+    void shouldNormalizePortugueseAccentsAndCedilla() {
+        String result = normalizer.normalize("Ação, coração, educação e evolução");
+        assertTrue(result.contains("acao"));
+        assertTrue(result.contains("coracao"));
+        assertTrue(result.contains("educacao"));
+        assertTrue(result.contains("evolucao"));
+    }
+
+    @Test
+    void shouldRemovePortugueseStopwords() {
+        String result = normalizer.normalize("o sistema de comparacao de textos em portugues");
+        assertFalse(result.contains(" o "));
+        assertFalse(result.contains(" de "));
+        assertFalse(result.contains(" em "));
+        assertTrue(result.contains("sistema"));
+        assertTrue(result.contains("comparacao"));
+        assertTrue(result.contains("textos"));
+        assertTrue(result.contains("portugues"));
     }
 
     @Test

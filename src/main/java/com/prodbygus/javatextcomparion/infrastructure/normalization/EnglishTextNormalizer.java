@@ -6,15 +6,19 @@ import org.springframework.stereotype.Component;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
- * Implementation of TextNormalizer with basic preprocessing and English stopword removal.
+ * Implementation of TextNormalizer with preprocessing for EN/PT texts.
+ *
+ * <p>Accentuation is normalized (e.g. acao == acao from acao/acao),
+ * allowing Portuguese documents with diacritics to be compared consistently.</p>
  */
 @Component
 public class EnglishTextNormalizer implements TextNormalizer {
 
-    private static final Set<String> ENGLISH_STOPWORDS = new HashSet<>(Arrays.asList(
+    private static final Set<String> STOPWORDS = new HashSet<>(Arrays.asList(
             "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he",
             "in", "is", "it", "its", "of", "on", "or", "that", "the", "to", "was", "were",
             "will", "with", "i", "me", "my", "we", "you", "your", "which", "who", "what",
@@ -23,7 +27,15 @@ public class EnglishTextNormalizer implements TextNormalizer {
             "just", "only", "no", "not", "so", "if", "but", "because", "before", "after",
             "between", "among", "during", "within", "without", "through", "about", "above",
             "below", "under", "over", "out", "into", "up", "down", "off", "all", "each",
-            "every", "both", "few", "more", "most", "other", "some", "such", "any", "many"
+            "every", "both", "few", "more", "most", "other", "some", "such", "any", "many",
+
+            // Portuguese stopwords
+            "o", "os", "a", "as", "um", "uma", "uns", "umas", "de", "da", "do", "das", "dos",
+            "e", "ou", "em", "no", "na", "nos", "nas", "por", "para", "com", "sem", "sob", "sobre",
+            "que", "quem", "qual", "quais", "como", "quando", "onde", "porque", "se", "mas", "tambem",
+            "ja", "muito", "muitos", "muita", "muitas", "mais", "menos", "todo", "toda", "todos", "todas",
+            "este", "esta", "estes", "estas", "esse", "essa", "esses", "essas", "aquele", "aquela", "aqueles", "aquelas",
+            "eu", "tu", "ele", "ela", "nos", "vos", "eles", "elas", "me", "te", "lhe", "lhes"
     ));
 
     @Override
@@ -36,10 +48,10 @@ public class EnglishTextNormalizer implements TextNormalizer {
         text = removeAccents(text);
 
         // Convert to lowercase
-        text = text.toLowerCase();
+        text = text.toLowerCase(Locale.ROOT);
 
-        // Remove special characters except spaces and hyphens
-        text = text.replaceAll("[^a-z0-9\\s\\-]", " ");
+        // Keep letters/digits/space/hyphen to support multilingual texts after accent removal.
+        text = text.replaceAll("[^\\p{L}\\p{N}\\s\\-]", " ");
 
         // Remove extra whitespace
         text = text.replaceAll("\\s+", " ").trim();
@@ -56,7 +68,7 @@ public class EnglishTextNormalizer implements TextNormalizer {
             return new String[0];
         }
 
-        return text.toLowerCase()
+        return text.toLowerCase(Locale.ROOT)
                 .split("[\\s\\-]+");
     }
 
@@ -66,11 +78,11 @@ public class EnglishTextNormalizer implements TextNormalizer {
             return "";
         }
 
-        String[] tokens = text.toLowerCase().split("\\s+");
+        String[] tokens = text.toLowerCase(Locale.ROOT).split("\\s+");
         StringBuilder result = new StringBuilder();
 
         for (String token : tokens) {
-            if (!ENGLISH_STOPWORDS.contains(token.toLowerCase())) {
+            if (!STOPWORDS.contains(token)) {
                 if (result.length() > 0) {
                     result.append(" ");
                 }

@@ -20,7 +20,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -30,8 +32,13 @@ import java.util.List;
 @PageTitle("Upload & Compare | Text Comparison")
 public class ComparisonUploadView extends Composite<VerticalLayout> {
 
+    private static final int MAX_COMPARISON_DOCS = 2;
+
     private final ComparisonService comparisonService;
-    private final List<DocumentDto> uploadedDocuments = new ArrayList<>();
+    private final Deque<DocumentDto> documentsForComparison = new ArrayDeque<>(MAX_COMPARISON_DOCS);
+    private final Paragraph selectedDocumentsInfo = new Paragraph("Nenhum documento pronto para comparacao.");
+    private final Paragraph lastComparisonInfo = new Paragraph("Nenhuma comparacao executada ainda.");
+    private Button compareButton;
 
     public ComparisonUploadView(ComparisonService comparisonService) {
         this.comparisonService = comparisonService;
@@ -82,7 +89,8 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
 
                 DocumentUploadRequest request = new DocumentUploadRequest(filename, data);
                 DocumentDto uploadedDoc = comparisonService.uploadDocument(request);
-                uploadedDocuments.add(uploadedDoc);
+                addDocumentForComparison(uploadedDoc);
+                updateComparisonState();
 
                 Notification.show("Document '" + filename + "' uploaded successfully!", 3000, Notification.Position.TOP_CENTER);
 
@@ -109,10 +117,14 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
         Paragraph info = new Paragraph("Select two uploaded documents to compare");
         info.addClassName("section-description");
 
-        Button compareButton = new Button("Compare Documents", VaadinIcon.PLAY.create());
+        selectedDocumentsInfo.addClassName("section-description");
+        lastComparisonInfo.addClassName("section-description");
+
+        compareButton = new Button("Compare Documents", VaadinIcon.PLAY.create());
         compareButton.addClassName("primary-action");
+        compareButton.setEnabled(false);
         compareButton.addClickListener(event -> {
-            if (uploadedDocuments.size() < 2) {
+            if (documentsForComparison.size() < MAX_COMPARISON_DOCS) {
                 Notification.show("Please upload at least 2 documents", 3000, Notification.Position.TOP_CENTER);
                 return;
             }
@@ -120,26 +132,55 @@ public class ComparisonUploadView extends Composite<VerticalLayout> {
             compareDocuments();
         });
 
-        section.add(heading, info, compareButton);
+        section.add(heading, info, selectedDocumentsInfo, lastComparisonInfo, compareButton);
         return section;
     }
 
     private void compareDocuments() {
-        if (uploadedDocuments.size() < 2) {
+        if (documentsForComparison.size() < MAX_COMPARISON_DOCS) {
             return;
         }
 
-        DocumentDto doc1 = uploadedDocuments.get(0);
-        DocumentDto doc2 = uploadedDocuments.get(1);
+        List<DocumentDto> selectedDocuments = new ArrayList<>(documentsForComparison);
+        DocumentDto doc1 = selectedDocuments.get(0);
+        DocumentDto doc2 = selectedDocuments.get(1);
 
         ComparisonRequest request = new ComparisonRequest(doc1.id(), doc2.id());
 
         try {
             ComparisonResult result = comparisonService.compareDocuments(request);
+            lastComparisonInfo.setText(String.format(
+                    "Ultimo resultado: %s x %s => Indice de correlacao %.2f%%",
+                    result.documentAName(),
+                    result.documentBName(),
+                    result.correlationIndex() * 100
+            ));
             showResultsDialog(result);
         } catch (Exception e) {
             Notification.show("Error comparing documents: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER);
         }
+    }
+
+    private void addDocumentForComparison(DocumentDto document) {
+        if (documentsForComparison.size() == MAX_COMPARISON_DOCS) {
+            documentsForComparison.removeFirst();
+        }
+        documentsForComparison.addLast(document);
+    }
+
+    private void updateComparisonState() {
+        compareButton.setEnabled(documentsForComparison.size() == MAX_COMPARISON_DOCS);
+
+        if (documentsForComparison.isEmpty()) {
+            selectedDocumentsInfo.setText("Nenhum documento pronto para comparacao.");
+            return;
+        }
+
+        List<String> fileNames = documentsForComparison.stream()
+                .map(DocumentDto::originalFileName)
+                .toList();
+
+        selectedDocumentsInfo.setText("Documentos selecionados: " + String.join(" x ", fileNames));
     }
 
     private void showResultsDialog(ComparisonResult result) {
